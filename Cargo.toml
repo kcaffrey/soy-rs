@@ -1,0 +1,7 @@
+[package]
+name = "soy"
+version = "0.1.0"
+authors = ["Kevin Caffrey"]
+license = "MIT OR Apache-2.0"
+
+[dependencies]
