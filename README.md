@@ -1,4 +1,7 @@
-# soy-rs
+# soy
+
+[![Build Status](https://travis-ci.org/kcaffrey/soy-rs.svg?branch=master)](https://travis-ci.org/kcaffrey/soy-rs)
+
 Rust implementation for Soy templates ([Google Closure templates](https://github.com/google/closure-templates)) (wip)
 
 ## License
