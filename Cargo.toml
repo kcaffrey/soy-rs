@@ -1,6 +1,6 @@
 [package]
 name = "soy"
-version = "0.1.0"
+version = "0.0.1"
 authors = ["Kevin Caffrey"]
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/kcaffrey/soy-rs"
@@ -8,6 +8,7 @@ documentation = "https://docs.rs/soy"
 keywords = ["soy", "template", "templating", "html", "web"]
 categories = ["template-engine"]
 edition = "2018"
+publish = false
 
 [dependencies]
 pest = "2.0"
