@@ -1,0 +1,155 @@
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
+COMMENT = _{ space* ~ "//" ~ (!NEWLINE ~ ANY)* ~ NEWLINE }
+
+// File headers
+soy_file = { SOI ~ delpackage? ~ namespace ~ alias* ~ template+ ~ EOI }
+delpackage = ${ "{delpackage" ~ space ~ global_name ~ "}" ~ NEWLINE}
+namespace = ${ "{namespace" ~ space ~ global_name ~ attributes ~ "}" ~ NEWLINE}
+alias = ${ "{alias" ~ space ~ global_name ~ alias_as? ~ "}" ~ NEWLINE }
+alias_as = ${ space ~ "as" ~ space ~ global_name }
+
+// Template
+template = { soydoc ~ template_open ~ template_block ~ template_close }
+soydoc = _{ "/**" ~ (!"*/" ~ ANY)* ~ "*/" }
+template_open = _{ template_tag ~ template_name ~ attributes ~ closetag }
+template_tag = @{ "{template" ~ WHITESPACE }
+template_block = { template_node* }
+template_close = { "{/template}" }
+template_name = ${ partial_name | global_name }
+partial_name = @{ "." ~ ident }
+template_node = _{ COMMENT | statement | raw_text }
+
+// Raw text
+//raw_text_line = _{ opt_spaces ~ raw_text ~ (inner_comment | trailing_space)? }
+raw_text = @{ (quoted_string | (!("{" | inner_comment | trailing_space) ~ ANY))+ }
+trailing_space = @{ opt_spaces ~ NEWLINE }
+inner_comment = @{ space+ ~ "//" ~ (!NEWLINE ~ ANY)* ~ NEWLINE }
+quoted_string = @{ ("\"" ~ dq_char* ~ "\"") | ("'" ~ sq_char* ~ "'") }
+dq_char = @{ "\\\"" | (!("\r" | "\n" | "\"") ~ ANY) }
+sq_char = @{ "\\'" | (!("\r" | "\n" | "[") ~ ANY) }
+
+// Statements
+statement = { msg_statement | print_statement }
+
+// Commands (used to disambiguate print statements)
+command_keyword = _{ "msg" | "print" | "default" | "plural" | "case" }
+
+// Msg
+msg_statement = { msg_open ~ msg_body ~ msg_close }
+msg_open = _{ msg_tag ~ attributes ~ closetag }
+msg_tag = @{ "{msg" ~ !ident_char }
+msg_body = _{ msg_plural | template_block }
+msg_plural = { plural_open ~ plural_case* ~ plural_default ~ plural_close }
+plural_open = _{ plural_tag ~ expression ~ closetag }
+plural_tag = @{ "{plural" ~ !ident_char }
+plural_case = { "{case " ~ expression ~ closetag ~ template_block }
+plural_default = { "{default}" ~ template_block }
+plural_close = { "{/plural}" }
+msg_close = { "{/msg}" }
+
+call_statement = { "" }
+
+// Print
+print_statement = { print_open ~ expression ~ print_directives ~ closetag }
+print_open = _{ explicit_print_open | implicit_print_open }
+explicit_print_open = @{ "{print" ~ !ident_char }
+implicit_print_open = @{ "{" ~ !command_keyword }
+print_directives = { print_directive* }
+print_directive = ${"|" ~ name ~ print_directive_params? ~ !(ident_char | "|") }
+print_directive_params = ${ ":" ~ expression_list }
+
+if_statement = { "" }
+switch_statement = { "" }
+for_statement = { "" }
+
+// Expressions
+expression_list = _{ expression ~ ("," ~ expression)* }
+expression = !{ ternary_operation | inner_expression }
+inner_expression = _{ operation | basic_value }
+basic_value = _{
+	null | boolean | float | integer | string 
+    | function
+	| reference | global_reference
+    | map_literal | list_literal
+    | parenthized | unary_operation
+}
+variable = ${ "$" ~ name }
+injected_data = ${ "$ij." ~ name }
+global_reference = @{ global_name }
+reference = @{ 
+	(injected_data | variable) 
+    ~ (question_dotted_reference | dotted_reference | question_bracketed_reference | bracketed_reference)* 
+}
+dotted_reference = ${ "." ~ reference_key }
+question_dotted_reference = ${ "?." ~ reference_key }
+bracketed_reference = ${ "[" ~ expression ~ "]" }
+question_bracketed_reference = ${ "?[" ~ expression ~ "]" }
+reference_key = ${ whole_number | name }
+function = ${ identifier ~ "(" ~ function_parameters? ~ ")" }
+function_parameters = !{ expression_list }
+
+// Lists and maps
+list_literal = !{ "[" ~ expression_list? ~ "]" }
+map_literal = !{ "[" ~ (":" | (map_entry ~ ("," ~ map_entry)*)) ~ "]" }
+map_entry = { map_key ~ ":" ~ map_value }
+map_key = { string }
+map_value = { expression }
+
+// Primitives
+null = @{ "null" ~ !(ASCII_ALPHANUMERIC | "_") }
+boolean = ${ value_true | value_false }
+value_true = @{ "true" ~ !(ASCII_ALPHANUMERIC | "_") }
+value_false = @{ "false" ~ !(ASCII_ALPHANUMERIC | "_") }
+whole_number = @{ "0" | ((!"0" ~ ASCII_DIGIT) ~ ASCII_DIGIT*) }
+integer = @{ "-"? ~ whole_number }
+float = @{ integer ~ ((fraction ~ exponent) | fraction | exponent) }
+fraction = @{ "." ~ ASCII_DIGIT+ }
+exponent = @{ "e" ~ integer }
+string = @{ single_quote_value }
+
+// Operations
+op_minus = { "-" }
+op_plus = { "+" }
+op_times = { "*" }
+op_divide = { "/" }
+op_modulo = { "%" }
+op_less = { "<" }
+op_le = { "<=" }
+op_greater = { ">" }
+op_ge = { ">=" }
+op_equals = { "==" }
+op_ne = { "!=" }
+op_not = @{ "not" ~ WHITESPACE }
+op_and = @{ "and" ~ WHITESPACE }
+op_or = @{ "or" ~ WHITESPACE }
+op_elvis = { "?:" }
+unary_operator = _{ op_minus | op_not }
+binary_operator = _{ 
+	op_minus | op_plus | op_times | op_divide | op_modulo 
+    | op_le | op_ge | op_less | op_greater | op_equals | op_ne
+    | op_and | op_or
+    | op_elvis
+}
+ternary_operation = !{ inner_expression ~ "?" ~ expression ~ ":" ~ expression }
+operation = !{ basic_value ~ (binary_operator ~ basic_value)* }
+unary_operation = !{ unary_operator ~ basic_value }
+parenthized = _{ "(" ~ expression ~ ")" }
+
+// Attributes and quoted values
+attributes = { (space? ~ attribute)* }
+attribute = ${ name ~ "=" ~ (single_quote_value | double_quote_value) }
+single_quote_value = ${ "'" ~ single_quote_value_text ~ "'" }
+single_quote_value_text = @{ ("\\'" | (!"'" ~ ANY))* }
+double_quote_value = ${ "\"" ~ double_quote_value_text ~ "\"" }
+double_quote_value_text = @{ ("\\\"" | (!"\"" ~ ANY))* }
+
+// Common terminals
+identifier = @{ ident ~ ("." ~ ident)* }
+name = @{ ident }
+global_name = @{ identifier }
+ident = @{ (ASCII_ALPHA | "_") ~ ident_char* }
+ident_char = _{ ASCII_ALPHANUMERIC | "_" }
+closetag = _{ space? ~ "}" }
+space = _{ " " ~ (" " | "\t")* }
+opt_spaces = _{ (!NEWLINE ~ (" " | "\t"))* }
+ws = _{ WHITESPACE+ }

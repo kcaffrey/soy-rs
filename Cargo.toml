@@ -3,5 +3,13 @@ name = "soy"
 version = "0.1.0"
 authors = ["Kevin Caffrey"]
 license = "MIT OR Apache-2.0"
+repository = "https://github.com/kcaffrey/soy-rs"
+documentation = "https://docs.rs/soy"
+keywords = ["soy", "template", "templating", "html", "web"]
+categories = ["template-engine"]
+edition = "2018"
 
 [dependencies]
+pest = "2.0"
+pest_derive = "2.0"
+lazy_static = "1.2.0"
