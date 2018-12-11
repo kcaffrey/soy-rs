@@ -3,25 +3,30 @@ COMMENT = _{ space* ~ "//" ~ (!NEWLINE ~ ANY)* ~ NEWLINE }
 
 // File headers
 soy_file = { SOI ~ delpackage? ~ namespace ~ alias* ~ template+ ~ EOI }
-delpackage = ${ "{delpackage" ~ space ~ global_name ~ "}" ~ NEWLINE}
-namespace = ${ "{namespace" ~ space ~ global_name ~ attributes ~ "}" ~ NEWLINE}
+delpackage = ${ "{delpackage" ~ space ~ global_name ~ "}" ~ NEWLINE }
+namespace = ${ "{namespace" ~ space ~ global_name ~ attributes ~ "}" ~ NEWLINE }
 alias = ${ "{alias" ~ space ~ global_name ~ alias_as? ~ "}" ~ NEWLINE }
 alias_as = ${ space ~ "as" ~ space ~ global_name }
 
 // Template
 template = { soydoc ~ template_open ~ template_block ~ template_close }
-soydoc = _{ "/**" ~ (!"*/" ~ ANY)* ~ "*/" }
+soydoc = { "/**" ~ (!"*/" ~ (soydoc_param | ANY))* ~ "*/" }
+soydoc_param = ${ space* ~ "*" ~ space* ~ (soydoc_optional | soydoc_required) ~ space* ~ name ~ (!(NEWLINE | "*/") ~ ANY)* }
+soydoc_required = { "@param" }
+soydoc_optional = { "@param?" }
 template_open = _{ template_tag ~ template_name ~ attributes ~ closetag }
 template_tag = @{ "{template" ~ WHITESPACE }
 template_block = { template_node* }
 template_close = { "{/template}" }
 template_name = ${ partial_name | global_name }
-partial_name = @{ "." ~ ident }
-template_node = _{ COMMENT | statement | raw_text }
+partial_name = ${ partial_dot ~ ident }
+partial_dot = _{ "." }
+template_node = ${ (COMMENT | multiline_comment | statement | raw_text) ~ (linebreak | inner_comment | multiline_comment)? }
+multiline_comment = { space* ~ "/*" ~ (!"*/" ~ ANY)* ~ "*/" ~ space* }
+linebreak = @{ "\r\n" | "\n\r" | "\r" | "\n" }
 
 // Raw text
-//raw_text_line = _{ opt_spaces ~ raw_text ~ (inner_comment | trailing_space)? }
-raw_text = @{ (quoted_string | (!("{" | inner_comment | trailing_space) ~ ANY))+ }
+raw_text = @{ (quoted_string | (!("{" | multiline_comment | inner_comment | trailing_space) ~ ANY))+ }
 trailing_space = @{ opt_spaces ~ NEWLINE }
 inner_comment = @{ space+ ~ "//" ~ (!NEWLINE ~ ANY)* ~ NEWLINE }
 quoted_string = @{ ("\"" ~ dq_char* ~ "\"") | ("'" ~ sq_char* ~ "'") }
