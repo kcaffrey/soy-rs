@@ -48,13 +48,13 @@ macro_rules! raw_text {
     ($text:expr) => {
         TemplateNode::RawText {
             value: $text.to_owned(),
-            has_linebreak: false,
+            newline: false,
         }
     };
     ($text:expr, $linebreak:expr) => {
         TemplateNode::RawText {
             value: $text.to_owned(),
-            has_linebreak: $linebreak,
+            newline: $linebreak,
         }
     };
 }
@@ -81,7 +81,7 @@ fn test_soyfile() {
                 delpackage: None,
                 aliases: vec![],
                 templates: vec![Template {
-                    name: TemplateName::Partial("bar".to_owned()),
+                    name: "bar".to_owned(),
                     body: vec![raw_text!("foo")],
                     soydoc_params: vec![],
                 }],
@@ -100,7 +100,7 @@ fn test_soyfile() {
                     to: None,
                 }],
                 templates: vec![Template {
-                    name: TemplateName::Partial("bar".to_owned()),
+                    name: "bar".to_owned(),
                     body: vec![raw_text!("foo")],
                     soydoc_params: vec![],
                 }],
@@ -347,7 +347,7 @@ fn test_template() {
             (
                 "/** */{template .foo}{/template}",
                 Template {
-                    name: TemplateName::Partial("foo".to_owned()),
+                    name: "foo".to_owned(),
                     body: TemplateBlock::new(),
                     soydoc_params: vec![],
                 },
@@ -355,13 +355,13 @@ fn test_template() {
             (
                 "/**\n * @param foo a foo\n * @param? bar\n */\n{template .foo}{$foo}{/template}",
                 Template {
-                    name: TemplateName::Partial("foo".to_owned()),
+                    name: "foo".to_owned(),
                     body: vec![TemplateNode::Statement {
                         command: Command::Print {
                             expression: variable!("foo"),
                             directives: vec![],
                         },
-                        has_linebreak: false
+                        newline: false
                     }],
                     soydoc_params: vec![
                         SoydocParam {
@@ -376,28 +376,10 @@ fn test_template() {
                 },
             ),
             (
-                "/** */{template foo}<span>{$foo}</span>{/template}",
-                Template {
-                    name: TemplateName::Global("foo".to_owned()),
-                    body: vec![
-                        raw_text!("<span>"),
-                        TemplateNode::Statement {
-                            command: Command::Print {
-                                expression: variable!("foo"),
-                                directives: vec![],
-                            },
-                            has_linebreak: false
-                        },
-                        raw_text!("</span>"),
-                    ],
-                    soydoc_params: vec![],
-                },
-            ),
-            (
                 // Demonstrating comments and whitespace stripping
-                "/** */{template foo} First // comment \n  Second<br>\n\n  // A comment \n  <i>Third</i>\n{/template}",
+                "/** */{template .foo} First // comment \n  Second<br>\n\n  // A comment \n  <i>Third</i>\n{/template}",
                 Template {
-                    name: TemplateName::Global("foo".to_owned()),
+                    name: "foo".to_owned(),
                     body: vec![
                         raw_text!("First", true),
                         raw_text!("Second<br>", true),
@@ -408,9 +390,9 @@ fn test_template() {
             ),
             (
                 // Demonstrating various forms of comments
-                "/** */{template foo}Foo // foooo\n Bar /* comment \n foo */\n /* lks */ Baz{/template}",
+                "/** */{template .foo}Foo // foooo\n Bar /* comment \n foo */\n /* lks */ Baz{/template}",
                 Template {
-                    name: TemplateName::Global("foo".to_owned()),
+                    name: "foo".to_owned(),
                     body: vec![
                         raw_text!("Foo", true),
                         raw_text!("Bar", true),

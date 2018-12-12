@@ -95,10 +95,8 @@ fn parse_template(pair: Pair<Rule>) -> Template {
             Rule::template_name => {
                 let p = p.into_inner().next().unwrap();
                 name = Some(match p.as_rule() {
-                    Rule::partial_name => {
-                        TemplateName::Partial(p.into_inner().next().unwrap().as_str().to_owned())
-                    }
-                    Rule::global_name => TemplateName::Global(p.as_str().to_owned()),
+                    Rule::partial_name => p.into_inner().next().unwrap().as_str().to_owned(),
+                    Rule::global_name => unimplemented!("this should return a friendly error"),
                     unrecognized => unreachable!("parse template name: {:?}", unrecognized),
                 });
             }
@@ -134,13 +132,13 @@ fn parse_soydoc_param(pair: Pair<Rule>) -> SoydocParam {
 fn parse_template_block(pair: Pair<Rule>) -> TemplateBlock {
     pair.into_inner()
         .flat_map(|p| {
-            let mut has_linebreak = false;
+            let mut newline = false;
             let mut command = None;
             let mut raw_text = None;
             for p in p.into_inner() {
                 match p.as_rule() {
                     Rule::linebreak | Rule::inner_comment | Rule::multiline_comment => {
-                        has_linebreak = true
+                        newline = true
                     }
                     Rule::statement => {
                         command = Some(parse_command(p.into_inner().next().unwrap()))
@@ -150,14 +148,11 @@ fn parse_template_block(pair: Pair<Rule>) -> TemplateBlock {
                 };
             }
             if let Some(command) = command {
-                Some(TemplateNode::Statement {
-                    command,
-                    has_linebreak,
-                })
+                Some(TemplateNode::Statement { command, newline })
             } else if let Some(raw_text) = raw_text {
                 Some(TemplateNode::RawText {
                     value: raw_text,
-                    has_linebreak,
+                    newline,
                 })
             } else {
                 None

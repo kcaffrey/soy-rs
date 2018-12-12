@@ -22,7 +22,7 @@ pub struct Alias {
 
 #[derive(Debug, PartialEq)]
 pub struct Template {
-    pub name: TemplateName,
+    pub name: String,
     pub body: TemplateBlock,
     pub soydoc_params: Vec<SoydocParam>,
 }
@@ -30,21 +30,9 @@ pub struct Template {
 pub type TemplateBlock = Vec<TemplateNode>;
 
 #[derive(Debug, PartialEq)]
-pub enum TemplateName {
-    Partial(String),
-    Global(String),
-}
-
-#[derive(Debug, PartialEq)]
 pub enum TemplateNode {
-    RawText {
-        value: String,
-        has_linebreak: bool,
-    },
-    Statement {
-        command: Command,
-        has_linebreak: bool,
-    },
+    RawText { value: String, newline: bool },
+    Statement { command: Command, newline: bool },
 }
 
 #[derive(Debug, PartialEq)]
