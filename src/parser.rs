@@ -4,15 +4,14 @@ use pest::Parser;
 use pest_derive::Parser;
 use std::collections::HashMap;
 
-pub mod ast;
-pub use self::ast::*;
+use crate::ast::*;
 
 #[cfg(test)]
 mod tests;
 
 #[derive(Parser)]
-#[grammar = "parser/soy.pest"]
-struct SoyParser;
+#[grammar = "soy.pest"]
+pub struct SoyParser;
 
 pub fn parse(input: &str) -> Result<SoyFile, Error<Rule>> {
     Ok(parse_soyfile(

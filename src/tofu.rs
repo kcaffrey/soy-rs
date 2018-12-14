@@ -1,5 +1,6 @@
+use crate::ast::{SoyFile, Template, TemplateNode};
 use crate::error::{RenderError, RenderErrorKind};
-use crate::parser::{self, SoyFile, Template, TemplateNode};
+use crate::parser;
 use std::collections::HashMap;
 
 pub struct Tofu {
