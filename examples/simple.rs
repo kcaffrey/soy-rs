@@ -1,4 +1,5 @@
 use soy::Tofu;
+use std::error::Error;
 
 static TEMPLATE: &str = "
 {namespace example}
@@ -11,12 +12,8 @@ static TEMPLATE: &str = "
 {/template}
 ";
 
-fn main() -> Result<(), String> {
+fn main() -> Result<(), Box<Error>> {
     let tofu = Tofu::with_string_template(TEMPLATE)?;
-    println!(
-        "{}",
-        tofu.render("example.helloWorld")
-            .map_err(|e| format!("{}", e))?
-    );
+    println!("{}", tofu.render("example.helloWorld")?);
     Ok(())
 }

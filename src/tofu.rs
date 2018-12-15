@@ -1,5 +1,5 @@
 use crate::ast::{SoyFile, Template, TemplateNode};
-use crate::error::{RenderError, RenderErrorKind};
+use crate::error::{CompileError, RenderError, RenderErrorKind};
 use crate::parser;
 use std::collections::HashMap;
 
@@ -9,8 +9,8 @@ pub struct Tofu {
 }
 
 impl Tofu {
-    pub fn with_string_template(template: &str) -> Result<Tofu, String> {
-        let file = parser::parse(template).map_err(|e| format!("{}", e))?;
+    pub fn with_string_template(template: &str) -> Result<Tofu, CompileError> {
+        let file = parser::parse(template)?;
         let mut tofu = Tofu {
             templates: HashMap::new(),
         };
@@ -57,7 +57,7 @@ impl Tofu {
     fn template(&self, name: &str) -> Result<&Template, RenderError> {
         self.templates.get(name).ok_or_else(|| RenderError {
             kind: RenderErrorKind::TemplateNotFound(name.to_owned()),
-            ..Default::default()
+            location: Default::default(),
         })
     }
 }

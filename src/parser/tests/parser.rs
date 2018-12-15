@@ -110,7 +110,7 @@ fn test_soyfile() {
 
     cases.iter().for_each(|(input, expected)| {
         assert_eq!(
-            parse!(input, (soy_file, parse_soyfile)),
+            parse!(input, (soy_file, parse_soyfile)).unwrap(),
             *expected,
             "\n{}",
             input

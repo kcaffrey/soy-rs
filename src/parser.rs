@@ -1,10 +1,10 @@
-use pest::error::Error;
 use pest::iterators::Pair;
 use pest::Parser;
 use pest_derive::Parser;
 use std::collections::HashMap;
 
 use crate::ast::*;
+use crate::error::{CompileError, CompileErrorKind};
 
 #[cfg(test)]
 mod tests;
@@ -13,13 +13,19 @@ mod tests;
 #[grammar = "soy.pest"]
 pub struct SoyParser;
 
-pub fn parse(input: &str) -> Result<SoyFile, Error<Rule>> {
-    Ok(parse_soyfile(
-        SoyParser::parse(Rule::soy_file, input)?.next().unwrap(),
-    ))
+pub fn parse(input: &str) -> Result<SoyFile, CompileError> {
+    let rules = SoyParser::parse(Rule::soy_file, input)
+        .map_err(|e| CompileError {
+            kind: CompileErrorKind::Parse,
+            cause: Some(Box::new(e)),
+            location: None,
+        })?
+        .next()
+        .unwrap();
+    parse_soyfile(rules)
 }
 
-fn parse_soyfile(pair: Pair<Rule>) -> SoyFile {
+fn parse_soyfile(pair: Pair<Rule>) -> Result<SoyFile, CompileError> {
     let mut delpackage = None;
     let mut namespace = None;
     let mut aliases = vec![];
@@ -36,12 +42,12 @@ fn parse_soyfile(pair: Pair<Rule>) -> SoyFile {
             unrecognized => unreachable!("parse soyfile: {:?}", unrecognized),
         }
     }
-    SoyFile {
+    Ok(SoyFile {
         delpackage,
         namespace: namespace.expect("expecting namespace"),
         aliases,
         templates,
-    }
+    })
 }
 
 fn parse_namespace(pair: Pair<Rule>) -> Namespace {
