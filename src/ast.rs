@@ -33,6 +33,7 @@ pub type TemplateBlock = Vec<TemplateNode>;
 pub enum TemplateNode {
     RawText { value: String, newline: bool },
     Statement { command: Command, newline: bool },
+    Special(String),
 }
 
 #[derive(Debug, PartialEq)]

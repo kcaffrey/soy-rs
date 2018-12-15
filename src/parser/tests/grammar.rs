@@ -93,6 +93,17 @@ fn test_template() {
 }
 
 #[test]
+fn test_specials() {
+    assert_matches!(special_sp, "{sp}");
+    assert_matches!(special_lb, "{lb}");
+    assert_matches!(special_rb, "{rb}");
+    assert_matches!(special_nil, "{nil}");
+    assert_matches!(special_return, "{\\r}");
+    assert_matches!(special_newline, "{\\n}");
+    assert_matches!(special_tab, "{\\t}");
+}
+
+#[test]
 fn test_expressions() {
     // valid expressions
     [

@@ -135,11 +135,13 @@ fn parse_soydoc_param(pair: Pair<Rule>) -> SoydocParam {
 }
 
 fn parse_template_block(pair: Pair<Rule>) -> TemplateBlock {
-    pair.into_inner()
+    let nodes: Vec<_> = pair
+        .into_inner()
         .flat_map(|p| {
             let mut newline = false;
             let mut command = None;
             let mut raw_text = None;
+            let mut special = None;
             for p in p.into_inner() {
                 match p.as_rule() {
                     Rule::linebreak | Rule::inner_comment | Rule::multiline_comment => {
@@ -149,6 +151,7 @@ fn parse_template_block(pair: Pair<Rule>) -> TemplateBlock {
                         command = Some(parse_command(p.into_inner().next().unwrap()))
                     }
                     Rule::raw_text => raw_text = Some(p.as_str().to_owned()),
+                    Rule::special => special = Some(parse_special(p)),
                     unrecognized => unreachable!("parse template block: {:?}", unrecognized),
                 };
             }
@@ -159,11 +162,29 @@ fn parse_template_block(pair: Pair<Rule>) -> TemplateBlock {
                     value: raw_text,
                     newline,
                 })
+            } else if let Some(special) = special {
+                Some(special)
             } else {
                 None
             }
         })
-        .collect()
+        .collect();
+    // TODO: line joining
+    nodes
+}
+
+fn parse_special(pair: Pair<Rule>) -> TemplateNode {
+    let p = pair.into_inner().next().unwrap();
+    match p.as_rule() {
+        Rule::special_sp => TemplateNode::Special(" ".to_owned()),
+        Rule::special_nil => TemplateNode::Special("".to_owned()),
+        Rule::special_lb => TemplateNode::Special("{".to_owned()),
+        Rule::special_rb => TemplateNode::Special("}".to_owned()),
+        Rule::special_return => TemplateNode::Special("\\r".to_owned()),
+        Rule::special_newline => TemplateNode::Special("\\n".to_owned()),
+        Rule::special_tab => TemplateNode::Special("\\t".to_owned()),
+        unrecognized => unreachable!("parse special: {:?}", unrecognized),
+    }
 }
 
 fn parse_expression(pair: Pair<Rule>) -> Expression {

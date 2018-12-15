@@ -21,7 +21,10 @@ template_close = { "{/template}" }
 template_name = ${ partial_name | global_name }
 partial_name = ${ partial_dot ~ ident }
 partial_dot = _{ "." }
-template_node = ${ (COMMENT | multiline_comment | statement | raw_text) ~ (linebreak | inner_comment | multiline_comment)? }
+template_node = ${ 
+    (COMMENT | multiline_comment | special | statement | raw_text)
+     ~ (linebreak | inner_comment | multiline_comment)?
+}
 multiline_comment = { space* ~ "/*" ~ (!"*/" ~ ANY)* ~ "*/" ~ space* }
 linebreak = @{ "\r\n" | "\n\r" | "\r" | "\n" }
 
@@ -36,8 +39,24 @@ sq_char = @{ "\\'" | (!("\r" | "\n" | "[") ~ ANY) }
 // Statements
 statement = { msg_statement | print_statement }
 
-// Commands (used to disambiguate print statements)
-command_keyword = _{ "msg" | "print" | "default" | "plural" | "case" }
+// Keywords (used to disambiguate print statements)
+keyword = _{ 
+    "msg" | "print" | "default" | "plural" | "case"
+    | "sp" | "nil" | "lb" | "rb" | "\\r" | "\\n" | "\\t"
+}
+
+// Specials
+special = { 
+    special_sp | special_nil | special_lb | special_rb 
+    | special_return | special_newline | special_tab
+}
+special_sp = { "{sp}" }
+special_nil = { "{nil}" }
+special_lb = { "{lb}" }
+special_rb = { "{rb}" }
+special_return = { "{\\r}" }
+special_newline = { "{\\n}" }
+special_tab = { "{\\t}" }
 
 // Msg
 msg_statement = { msg_open ~ msg_body ~ msg_close }
@@ -58,7 +77,7 @@ call_statement = { "" }
 print_statement = { print_open ~ expression ~ print_directives ~ closetag }
 print_open = _{ explicit_print_open | implicit_print_open }
 explicit_print_open = @{ "{print" ~ !ident_char }
-implicit_print_open = @{ "{" ~ !command_keyword }
+implicit_print_open = @{ "{" ~ !keyword }
 print_directives = { print_directive* }
 print_directive = ${"|" ~ name ~ print_directive_params? ~ !(ident_char | "|") }
 print_directive_params = ${ ":" ~ expression_list }

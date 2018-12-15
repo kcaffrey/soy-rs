@@ -39,6 +39,7 @@ impl Tofu {
                     }
                     add_space_if_text = false;
                 }
+                TemplateNode::Special(special) => output.push_str(special),
             }
         }
         output.shrink_to_fit();

@@ -271,6 +271,27 @@ fn test_expressions() {
 }
 
 #[test]
+fn test_specials() {
+    let cases = &[
+        ("{sp}", TemplateNode::Special(" ".to_owned())),
+        ("{nil}", TemplateNode::Special("".to_owned())),
+        ("{lb}", TemplateNode::Special("{".to_owned())),
+        ("{rb}", TemplateNode::Special("}".to_owned())),
+        ("{\\r}", TemplateNode::Special("\\r".to_owned())),
+        ("{\\n}", TemplateNode::Special("\\n".to_owned())),
+        ("{\\t}", TemplateNode::Special("\\t".to_owned())),
+    ];
+    for (input, expected) in cases {
+        assert_eq!(
+            parse!(input, (special, parse_special)),
+            *expected,
+            "\n{}",
+            input
+        );
+    }
+}
+
+#[test]
 fn test_msg() {
     assert_eq!(
         parse!(
@@ -353,16 +374,19 @@ fn test_template() {
                 },
             ),
             (
-                "/**\n * @param foo a foo\n * @param? bar\n */\n{template .foo}{$foo}{/template}",
+                "/**\n * @param foo a foo\n * @param? bar\n */\n{template .foo}{$foo}{sp}{/template}",
                 Template {
                     name: "foo".to_owned(),
-                    body: vec![TemplateNode::Statement {
-                        command: Command::Print {
-                            expression: variable!("foo"),
-                            directives: vec![],
-                        },
-                        newline: false
-                    }],
+                    body: vec![
+                        TemplateNode::Statement {
+                            command: Command::Print {
+                                expression: variable!("foo"),
+                                directives: vec![],
+                            },
+                            newline: false
+                        }, 
+                        TemplateNode::Special(" ".to_owned())
+                    ],
                     soydoc_params: vec![
                         SoydocParam {
                             name: "foo".to_owned(),
