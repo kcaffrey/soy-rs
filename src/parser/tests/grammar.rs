@@ -142,6 +142,14 @@ fn test_expressions() {
 }
 
 #[test]
+fn test_literal() {
+    assert_matches!(literal_statement, "{literal}{/literal}");
+    assert_matches!(literal_statement, "{literal}{{{{{{{{{/literal}");
+    assert_matches!(literal_statement, "{literal}//{/literal}");
+    assert_fails!(literal_statement, "{literal}foo", "no closing tag");
+}
+
+#[test]
 fn test_msg() {
     assert_matches!(msg_statement, "{msg foo=\"bar\"}fun <span>{/msg}");
     assert_matches!(msg_statement, "{msg}{/msg}");

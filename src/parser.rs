@@ -374,6 +374,9 @@ fn parse_command(pair: Pair<Rule>) -> Command {
         Rule::msg_statement => Command::Msg {
             body: parse_message_body(pair),
         },
+        Rule::literal_statement => {
+            Command::Literal(pair.into_inner().next().unwrap().as_str().to_owned())
+        }
         Rule::print_statement => {
             let mut p = pair.into_inner();
             p.next(); // Get rid of the open tag.

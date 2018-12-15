@@ -51,6 +51,7 @@ pub enum Command {
         expression: Expression,
         directives: Vec<PrintDirective>,
     },
+    Literal(String),
 }
 
 #[derive(Debug, PartialEq)]

@@ -1,4 +1,4 @@
-use crate::ast::{SoyFile, Template, TemplateNode};
+use crate::ast::{Command, SoyFile, Template, TemplateNode};
 use crate::error::{CompileError, RenderError, RenderErrorKind};
 use crate::parser;
 use std::collections::HashMap;
@@ -34,8 +34,9 @@ impl Tofu {
                 }
                 TemplateNode::Statement { command, .. } => {
                     match command {
-                        // TODO: implement
-                        _ => {}
+                        Command::Literal(literal) => output.push_str(literal),
+                        Command::Msg { .. } => {}   // TODO: implement
+                        Command::Print { .. } => {} // TODO: implement
                     }
                     add_space_if_text = false;
                 }

@@ -292,6 +292,14 @@ fn test_specials() {
 }
 
 #[test]
+fn test_literal() {
+    assert_eq!(
+        parse!("{literal}foo{sp}\n// foo\n  bar{/literal}", (literal_statement, parse_command)),
+        Command::Literal("foo{sp}\n// foo\n  bar".to_owned())
+    );
+}
+
+#[test]
 fn test_msg() {
     assert_eq!(
         parse!(

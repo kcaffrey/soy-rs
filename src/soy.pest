@@ -37,7 +37,7 @@ dq_char = @{ "\\\"" | (!("\r" | "\n" | "\"") ~ ANY) }
 sq_char = @{ "\\'" | (!("\r" | "\n" | "[") ~ ANY) }
 
 // Statements
-statement = { msg_statement | print_statement }
+statement = { literal_statement | msg_statement | print_statement }
 
 // Keywords (used to disambiguate print statements)
 keyword = _{ 
@@ -57,6 +57,10 @@ special_rb = { "{rb}" }
 special_return = { "{\\r}" }
 special_newline = { "{\\n}" }
 special_tab = { "{\\t}" }
+
+// Literal
+literal_statement = ${ "{literal}" ~ literal_body ~ "{/literal}" }
+literal_body = @{ (!"{/literal}" ~ ANY)* }
 
 // Msg
 msg_statement = { msg_open ~ msg_body ~ msg_close }
