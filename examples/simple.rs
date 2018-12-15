@@ -14,6 +14,6 @@ static TEMPLATE: &str = "
 
 fn main() -> Result<(), Box<Error>> {
     let tofu = Tofu::with_string_template(TEMPLATE)?;
-    println!("{}", tofu.render("example.helloWorld")?);
+    println!("{}", tofu.render_to_string("example.helloWorld")?);
     Ok(())
 }

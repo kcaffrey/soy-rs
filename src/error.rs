@@ -1,5 +1,7 @@
 use std::error::Error;
 use std::fmt;
+use std::io;
+use std::string::FromUtf8Error;
 
 #[derive(Debug)]
 pub struct TemplateLocation {
@@ -18,6 +20,8 @@ pub struct RenderError {
 
 #[derive(Debug)]
 pub enum RenderErrorKind {
+    IoError(io::Error),
+    Utf8Error(FromUtf8Error),
     TemplateNotFound(String),
     // TODO: more error kinds
 }
@@ -48,11 +52,31 @@ impl Error for CompileError {
     }
 }
 
+impl From<io::Error> for RenderError {
+    fn from(from: io::Error) -> Self {
+        RenderError {
+            kind: RenderErrorKind::IoError(from),
+            location: None,
+        }
+    }
+}
+
+impl From<FromUtf8Error> for RenderError {
+    fn from(from: FromUtf8Error) -> Self {
+        RenderError {
+            kind: RenderErrorKind::Utf8Error(from),
+            location: None,
+        }
+    }
+}
+
 impl fmt::Display for RenderError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use self::RenderErrorKind::*;
         match &self.kind {
             TemplateNotFound(t) => write!(f, "Template not found: {}", t)?,
+            IoError(e) => write!(f, "IO Error: {}", e)?,
+            Utf8Error(e) => write!(f, "UTF8 Encoding Error: {}", e)?,
         }
         if let Some(location) = &self.location {
             write!(f, "\n{}", location)?;
