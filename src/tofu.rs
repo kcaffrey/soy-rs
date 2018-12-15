@@ -19,8 +19,9 @@ impl Tofu {
         Ok(tofu)
     }
 
-    pub fn render<W: Write>(&self, writer: &mut W, template_name: &str) -> Result<(), RenderError> {
-        self.render_template(writer, self.template(template_name)?)
+    pub fn render<W: Write>(&self, writer: W, template_name: &str) -> Result<(), RenderError> {
+        let mut writer = writer;
+        self.render_template(&mut writer, self.template(template_name)?)
     }
 
     pub fn render_to_string(&self, template_name: &str) -> Result<String, RenderError> {
