@@ -44,6 +44,11 @@ pub struct SoydocParam {
 
 #[derive(Debug, PartialEq)]
 pub enum Command {
+    If {
+        if_block: ConditionalBlock,
+        else_ifs: Vec<ConditionalBlock>,
+        else_block: Option<TemplateBlock>,
+    },
     Msg {
         body: MsgBody,
     },
@@ -52,6 +57,12 @@ pub enum Command {
         directives: Vec<PrintDirective>,
     },
     Literal(String),
+}
+
+#[derive(Debug, PartialEq)]
+pub struct ConditionalBlock {
+    pub expression: Expression,
+    pub block: TemplateBlock,
 }
 
 #[derive(Debug, PartialEq)]

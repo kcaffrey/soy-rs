@@ -377,6 +377,7 @@ fn parse_command(pair: Pair<Rule>) -> Command {
         Rule::literal_statement => {
             Command::Literal(pair.into_inner().next().unwrap().as_str().to_owned())
         }
+        Rule::if_statement => parse_if(pair),
         Rule::print_statement => {
             let mut p = pair.into_inner();
             p.next(); // Get rid of the open tag.
@@ -402,6 +403,41 @@ fn parse_command(pair: Pair<Rule>) -> Command {
             }
         }
         unrecognized => unreachable!("parse command: {:?}", unrecognized),
+    }
+}
+
+fn parse_if(pair: Pair<Rule>) -> Command {
+    let mut if_block = None;
+    let mut else_ifs = vec![];
+    let mut else_block = None;
+    for p in pair.into_inner() {
+        match p.as_rule() {
+            Rule::if_block => {
+                let mut p = p.into_inner();
+                let expression = parse_expression(p.next().unwrap());
+                let block = parse_template_block(p.next().unwrap());
+                if_block = Some(ConditionalBlock { expression, block });
+            }
+            Rule::elseif_block => {
+                let mut p = p.into_inner();
+                p.next().unwrap(); // elseif tag
+                let expression = parse_expression(p.next().unwrap());
+                let block = parse_template_block(p.next().unwrap());
+                else_ifs.push(ConditionalBlock { expression, block });
+            }
+            Rule::else_block => {
+                let mut p = p.into_inner();
+                p.next().unwrap(); // else tag
+                else_block = Some(parse_template_block(p.next().unwrap()));
+            }
+            Rule::if_open => {} // ignored
+            unrecognized => unreachable!("parse if statement: {:?}", unrecognized),
+        }
+    }
+    Command::If {
+        if_block: if_block.expect("expecting if block"),
+        else_ifs,
+        else_block,
     }
 }
 

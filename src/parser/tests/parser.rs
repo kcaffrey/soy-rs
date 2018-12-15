@@ -68,6 +68,15 @@ macro_rules! attributes {
     };
 }
 
+macro_rules! command {
+    ($command:expr) => {
+        TemplateNode::Statement {
+            command: $command,
+            newline: false,
+        }
+    };
+}
+
 #[test]
 fn test_soyfile() {
     let cases = &[
@@ -294,9 +303,74 @@ fn test_specials() {
 #[test]
 fn test_literal() {
     assert_eq!(
-        parse!("{literal}foo{sp}\n// foo\n  bar{/literal}", (literal_statement, parse_command)),
+        parse!(
+            "{literal}foo{sp}\n// foo\n  bar{/literal}",
+            (literal_statement, parse_command)
+        ),
         Command::Literal("foo{sp}\n// foo\n  bar".to_owned())
     );
+}
+
+#[test]
+fn test_if() {
+    let cases = &[
+        (
+            "{if true}{/if}",
+            Command::If {
+                if_block: ConditionalBlock {
+                    expression: Expression::Boolean(true),
+                    block: vec![],
+                },
+                else_ifs: vec![],
+                else_block: None,
+            },
+        ),
+        (
+            "{if $baz}{$foo}{else}bar{/if}",
+            Command::If {
+                if_block: ConditionalBlock {
+                    expression: variable!("baz"),
+                    block: vec![command!(Command::Print {
+                        expression: variable!("foo"),
+                        directives: vec![]
+                    })],
+                },
+                else_ifs: vec![],
+                else_block: Some(vec![raw_text!("bar")]),
+            },
+        ),
+        (
+            "{if $baz}{$foo}{elseif true}e{elseif false}f{else}bar{/if}",
+            Command::If {
+                if_block: ConditionalBlock {
+                    expression: variable!("baz"),
+                    block: vec![command!(Command::Print {
+                        expression: variable!("foo"),
+                        directives: vec![]
+                    })],
+                },
+                else_ifs: vec![
+                    ConditionalBlock {
+                        expression: Expression::Boolean(true),
+                        block: vec![raw_text!("e")],
+                    },
+                    ConditionalBlock {
+                        expression: Expression::Boolean(false),
+                        block: vec![raw_text!("f")],
+                    },
+                ],
+                else_block: Some(vec![raw_text!("bar")]),
+            },
+        ),
+    ];
+    cases.iter().for_each(|(input, expected)| {
+        assert_eq!(
+            parse!(input, (if_statement, parse_command)),
+            *expected,
+            "\n{}",
+            input
+        );
+    });
 }
 
 #[test]
@@ -386,13 +460,10 @@ fn test_template() {
                 Template {
                     name: "foo".to_owned(),
                     body: vec![
-                        TemplateNode::Statement {
-                            command: Command::Print {
-                                expression: variable!("foo"),
-                                directives: vec![],
-                            },
-                            newline: false
-                        }, 
+                        command!(Command::Print {
+                            expression: variable!("foo"),
+                            directives: vec![],
+                        }),
                         TemplateNode::Special(" ".to_owned())
                     ],
                     soydoc_params: vec![

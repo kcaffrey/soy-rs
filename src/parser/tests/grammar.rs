@@ -150,6 +150,37 @@ fn test_literal() {
 }
 
 #[test]
+fn test_if() {
+    assert_matches!(if_statement, "{if true}{/if}");
+    assert_matches!(if_statement, "{if 5 < $baz}{$foo}{elseif $baz}foo{/if}");
+    assert_matches!(if_statement, "{if 5 < $baz}{$foo}{else}foo{/if}");
+    assert_matches!(
+        if_statement,
+        "{if 5 < $baz}{$foo}{elseif $baz}foo{elseif $bb}bar{/if}"
+    );
+    assert_matches!(
+        if_statement,
+        "{if 5 < $baz}{$foo}{elseif $baz}foo{else}bar{/if}"
+    );
+    assert_fails!(
+        if_statement,
+        "{if 5 < $baz}{$foo}{else}foo{else}bar{/if}",
+        "can't have two else blocks"
+    );
+    assert_fails!(if_statement, "{if}{/if}", "missing if expression");
+    assert_fails!(
+        if_statement,
+        "{if true}{elseif}foo{/if}",
+        "missing elseif expression"
+    );
+    assert_fails!(
+        if_statement,
+        "{if}{else $bar}{/if}",
+        "else can't have expression"
+    );
+}
+
+#[test]
 fn test_msg() {
     assert_matches!(msg_statement, "{msg foo=\"bar\"}fun <span>{/msg}");
     assert_matches!(msg_statement, "{msg}{/msg}");

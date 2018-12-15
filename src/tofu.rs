@@ -72,6 +72,7 @@ impl Tofu {
                 TemplateNode::Statement { command, .. } => {
                     match command {
                         Command::Literal(literal) => writer.write_all(literal.as_bytes())?,
+                        Command::If { .. } => {}    // TODO: implement
                         Command::Msg { .. } => {}   // TODO: implement
                         Command::Print { .. } => {} // TODO: implement
                     }

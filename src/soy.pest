@@ -16,7 +16,7 @@ soydoc_required = { "@param" }
 soydoc_optional = { "@param?" }
 template_open = _{ template_tag ~ template_name ~ attributes ~ closetag }
 template_tag = @{ "{template" ~ WHITESPACE }
-template_block = { template_node* }
+template_block = !{ template_node* }
 template_close = { "{/template}" }
 template_name = ${ partial_name | global_name }
 partial_name = ${ partial_dot ~ ident }
@@ -37,11 +37,12 @@ dq_char = @{ "\\\"" | (!("\r" | "\n" | "\"") ~ ANY) }
 sq_char = @{ "\\'" | (!("\r" | "\n" | "[") ~ ANY) }
 
 // Statements
-statement = { literal_statement | msg_statement | print_statement }
+statement = !{ literal_statement | if_statement | msg_statement | print_statement }
 
 // Keywords (used to disambiguate print statements)
 keyword = _{ 
     "msg" | "print" | "default" | "plural" | "case"
+    | "if" | "elseif" | "else"
     | "sp" | "nil" | "lb" | "rb" | "\\r" | "\\n" | "\\t"
 }
 
@@ -61,6 +62,16 @@ special_tab = { "{\\t}" }
 // Literal
 literal_statement = ${ "{literal}" ~ literal_body ~ "{/literal}" }
 literal_body = @{ (!"{/literal}" ~ ANY)* }
+
+// If
+if_statement = { if_open ~ if_block ~ elseif_block* ~ else_block? ~ if_close }
+if_open = @{ "{if" ~ !(ident_char | "$") }
+if_close = _{ "{/if}" }
+if_block = { expression ~ "}" ~ template_block }
+elseif_block = { elseif_tag ~ expression ~ "}" ~ template_block }
+elseif_tag = @{ "{elseif" ~ !(ident_char | "$") }
+else_block = { else_tag ~ "}" ~ template_block }
+else_tag = @{ "{else" ~ !(ident_char | "$") }
 
 // Msg
 msg_statement = { msg_open ~ msg_body ~ msg_close }
@@ -86,7 +97,6 @@ print_directives = { print_directive* }
 print_directive = ${"|" ~ name ~ print_directive_params? ~ !(ident_char | "|") }
 print_directive_params = ${ ":" ~ expression_list }
 
-if_statement = { "" }
 switch_statement = { "" }
 for_statement = { "" }
 
